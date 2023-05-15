@@ -9,12 +9,22 @@ import { ProductService } from './product.service';
 })
 export class ProductListComponent implements OnInit {
   pageTitle = 'Product List';
-  listFilter = '';
   showImage = false;
 
   imageWidth = 50;
   imageMargin = 2;
   errorMessage = ''
+
+  private _listFilter!: string;
+  get listFilter():string {
+    return this._listFilter;
+  }
+
+  set listFilter(value:string) {
+    this._listFilter = value;
+    this.performFilter(this.listFilter)
+  }
+
 
   filteredProducts: IProduct[] = [];
   products: IProduct[] = [];
