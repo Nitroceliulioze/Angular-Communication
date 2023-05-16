@@ -8,6 +8,7 @@ import { ProductDetailComponent } from './product-detail.component';
 import { ProductEditComponent } from './edit/product-edit.component';
 
 import { ProductEditGuard } from './edit/product-edit-guard.service';
+import { ProductParameterService } from './poduct-parameter.service';
 
 @NgModule({
   imports: [
@@ -25,7 +26,10 @@ import { ProductEditGuard } from './edit/product-edit-guard.service';
   declarations: [
     ProductListComponent,
     ProductDetailComponent,
-    ProductEditComponent
+    ProductEditComponent,
+  ],
+  providers: [
+    ProductParameterService
   ]
 })
 export class ProductModule { }
