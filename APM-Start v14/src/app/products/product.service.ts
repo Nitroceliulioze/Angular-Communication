@@ -1,36 +1,50 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+} from '@angular/common/http';
 
 import { catchError, Observable, of, tap, throwError } from 'rxjs';
 
 import { IProduct } from './product';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ProductService {
   private productsUrl = 'api/products';
+  private products!: IProduct[];
+  currentProduct!: IProduct | null;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getProducts(): Observable<IProduct[]> {
-    return this.http.get<IProduct[]>(this.productsUrl)
-      .pipe(
-        tap(data => console.log(JSON.stringify(data))),
-        catchError(this.handleError)
-      );
+    if (this.products) {
+      return of(this.products);
+    }
+    return this.http.get<IProduct[]>(this.productsUrl).pipe(
+      tap((data) => console.log(JSON.stringify(data))),
+      tap((data) => (this.products = data)),
+      catchError(this.handleError)
+    );
   }
 
   getProduct(id: number): Observable<IProduct> {
     if (id === 0) {
       return of(this.initializeProduct());
     }
+    if (this.products) {
+      const foundItem = this.products.find((item) => item.id === id);
+      if (foundItem) {
+        return of(foundItem);
+      }
+    }
     const url = `${this.productsUrl}/${id}`;
-    return this.http.get<IProduct>(url)
-      .pipe(
-        tap(data => console.log('Data: ' + JSON.stringify(data))),
-        catchError(this.handleError)
-      );
+    return this.http.get<IProduct>(url).pipe(
+      tap((data) => console.log('Data: ' + JSON.stringify(data))),
+      catchError(this.handleError)
+    );
   }
 
   saveProduct(product: IProduct): Observable<IProduct> {
@@ -45,29 +59,47 @@ export class ProductService {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
     const url = `${this.productsUrl}/${id}`;
-    return this.http.delete<IProduct>(url, { headers })
-      .pipe(
-        tap(() => console.log('deleteProduct: ' + id)),
-        catchError(this.handleError)
-      );
+    return this.http.delete<IProduct>(url, { headers }).pipe(
+      tap(() => console.log('deleteProduct: ' + id)),
+      tap((data) => {
+        const foundIndex = this.products.findIndex((item) => item.id === id);
+        if (foundIndex > -1) {
+          this.products.splice(foundIndex, 1);
+          this.currentProduct = null;
+        }
+      }),
+      catchError(this.handleError)
+    );
   }
 
-  private createProduct(product: IProduct, headers: HttpHeaders): Observable<IProduct> {
+  private createProduct(
+    product: IProduct,
+    headers: HttpHeaders
+  ): Observable<IProduct> {
     product.id = null;
-    return this.http.post<IProduct>(this.productsUrl, product, { headers })
+    return this.http
+      .post<IProduct>(this.productsUrl, product, { headers })
       .pipe(
-        tap(createdProduct => console.log('createProduct: ' + JSON.stringify(createdProduct))),
+        tap((createdProduct) =>
+          console.log('createProduct: ' + JSON.stringify(createdProduct))
+        ),
+        tap((data) => {
+          this.products.push(data);
+          this.currentProduct = data;
+        }),
         catchError(this.handleError)
       );
   }
 
-  private updateProduct(product: IProduct, headers: HttpHeaders): Observable<IProduct> {
+  private updateProduct(
+    product: IProduct,
+    headers: HttpHeaders
+  ): Observable<IProduct> {
     const url = `${this.productsUrl}/${product.id}`;
-    return this.http.put<IProduct>(url, product, { headers })
-      .pipe(
-        tap(() => console.log('updateProduct: ' + product.id)),
-        catchError(this.handleError)
-      );
+    return this.http.put<IProduct>(url, product, { headers }).pipe(
+      tap(() => console.log('updateProduct: ' + product.id)),
+      catchError(this.handleError)
+    );
   }
 
   private initializeProduct(): IProduct {
@@ -82,7 +114,7 @@ export class ProductService {
       price: 0,
       description: '',
       starRating: 0,
-      imageUrl: ''
+      imageUrl: '',
     };
   }
 
@@ -102,5 +134,4 @@ export class ProductService {
     console.error(errorMessage);
     return throwError(() => errorMessage);
   }
-
 }
