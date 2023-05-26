@@ -5,7 +5,7 @@ import {
   HttpHeaders,
 } from '@angular/common/http';
 
-import { catchError, Observable, of, tap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, Observable, of, Subject, tap, throwError } from 'rxjs';
 
 import { IProduct } from './product';
 
@@ -15,16 +15,27 @@ import { IProduct } from './product';
 export class ProductService {
   private productsUrl = 'api/products';
   private products!: IProduct[];
-  currentProduct!: IProduct | null;
+
+  private selectedProductSource = new BehaviorSubject<IProduct | null>(null);
+  selectedProductChanges$ = this.selectedProductSource.asObservable();
 
   constructor(private http: HttpClient) {}
 
+  changeSelectedProduct(selectedProduct: IProduct | null) : void {
+    this.selectedProductSource.next(selectedProduct);
+  }
+
   getProducts(): Observable<IProduct[]> {
     if (this.products) {
+      console.log(this.products);
       return of(this.products);
+      
     }
     return this.http.get<IProduct[]>(this.productsUrl).pipe(
-      tap((data) => console.log(JSON.stringify(data))),
+      tap((data) => {console.log(JSON.stringify(data));
+        
+      }),
+      
       tap((data) => (this.products = data)),
       catchError(this.handleError)
     );
@@ -65,7 +76,7 @@ export class ProductService {
         const foundIndex = this.products.findIndex((item) => item.id === id);
         if (foundIndex > -1) {
           this.products.splice(foundIndex, 1);
-          this.currentProduct = null;
+          this.changeSelectedProduct(null);
         }
       }),
       catchError(this.handleError)
@@ -85,7 +96,7 @@ export class ProductService {
         ),
         tap((data) => {
           this.products.push(data);
-          this.currentProduct = data;
+          this.changeSelectedProduct(data);
         }),
         catchError(this.handleError)
       );

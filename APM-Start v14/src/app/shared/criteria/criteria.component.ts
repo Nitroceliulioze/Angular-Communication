@@ -17,7 +17,6 @@ import {
   styleUrls: ['./criteria.component.css'],
 })
 export class CriteriaComponent implements OnInit, OnChanges, AfterViewInit {
-  
   @Input() displayDetail!: boolean;
   @Input() hitCount!: number;
   hitMessage!: string;
@@ -44,7 +43,7 @@ export class CriteriaComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(changes ['hitCount'] && !changes['hitCount'].currentValue) {
+    if(changes['hitCount'] && !changes['hitCount'].currentValue) {
       this.hitMessage = "No matches found";
     } else {
       this.hitMessage = 'Hits: ' + this.hitCount;
